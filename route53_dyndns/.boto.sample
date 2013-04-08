@@ -1,0 +1,10 @@
+[Credentials]
+aws_access_key_id = <your_access_key_here>
+aws_secret_access_key = <your_secret_key_here>
+
+[Boto]
+debug = 1
+num_retries = 10
+
+[PyAMI]
+working_directory = ~/
