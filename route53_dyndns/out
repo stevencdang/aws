@@ -1,0 +1,11 @@
+DEBUG:__main__:Access key is AKIA5LZIDW7DCYMDJKA###
+DEBUG:__main__:Secret key is Wk2Om4e41oX7c5s6eNcmqq1LWZ6lBYgglNDRkDsW###
+DEBUG:__main__:got connection sith host route53.amazonaws.com and api version 2012-02-29
+Traceback (most recent call last):
+  File "settings.py", line 51, in <module>
+    zone = aws.get_all_rrsets(cfg.zone_id)
+  File "/usr/local/lib/python2.7/dist-packages/boto/route53/connection.py", line 285, in get_all_rrsets
+    body)
+boto.route53.exception.DNSServerError: DNSServerError: 403 Forbidden
+<?xml version="1.0"?>
+<ErrorResponse xmlns="https://route53.amazonaws.com/doc/2012-02-29/"><Error><Type>Sender</Type><Code>InvalidClientTokenId</Code><Message>The security token included in the request is invalid</Message></Error><RequestId>f254fd6d-9ffb-11e2-b4b5-f3ccf0e3a0b4</RequestId></ErrorResponse>

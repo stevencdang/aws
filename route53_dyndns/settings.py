@@ -3,7 +3,6 @@ from boto.pyami import config
 import boto
 import ConfigParser
 
-from area53 import route53
 import logging
 
 #Setup logging
@@ -18,6 +17,7 @@ class Settings(object):
 	config = None
 	access_key = None
 	secret_key = None
+	zone_id = 'Z3DDPTYQOOEYGN'
 	zone_name = 'scdangit.com'
 	record_name = 'pollenoffice.scdangit.com'
 
@@ -31,27 +31,16 @@ class Settings(object):
 		self.access_key = self.config.get('Credentials', 'aws_access_key_id')
 		self.secret_key = self.config.get('Credentials', 'aws_secret_access_key')
 
-# use area53 to update a record give name and ip and strings
-def area53_update_record(zone_name, name, ip):
-	zone = route53.get_zone(zone_name)
-	for record in zone.get_records():
-		print(record)
 
 
 if __name__ == '__main__':
-	#establish a connection to route53
-	cfg = Settings()
-	logger.debug('Access key is %s###' % cfg.access_key)
-	logger.debug('Secret key is %s###' % cfg.secret_key)
-	aws = connection.Route53Connection(cfg.access_key,
-					   cfg.secret_key,
-					   debug=2)
 
 #aws_access_key_id=cfg.access_key,
 					   #aws_secret_access_key=cfg.secret_key)
 	#aws = boto.connect_route53(cfg.access_key,
 				   #cfg.secret_key)
 	logger.debug('got connection sith host %s and api version %s' % (aws.DefaultHost, aws.Version))
-	index, zones = aws.get_zones()
-	logger.debug('zone index:%d number of zones:%d' % (index, len(zones)))
+	zones = aws.get_zones()
+	zone = aws.get_hosted_zone(cfg.zone_id)
+	logger.debug('number of zones:%d' % len(zones))
 					   
