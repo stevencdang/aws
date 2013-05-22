@@ -1,15 +1,13 @@
-#/usr/bin/python
+#!/usr/bin/python
 import socket, os, time, re
 import urllib2
-import settings
-from settings import Settings
+from aws.route53_dyndns import settings
 from area53 import route53
 from boto.route53 import connection, record
 import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(settings.log_level)
-cfg = settings.Settings()
 
 def get_connection():
 	global cfg, logger
@@ -62,15 +60,18 @@ def define_update_record(zone_name, record_name, new_ip):
 	for rrset in current_rrsets:
 		if record_name in rrset.to_xml():
 			current_ip = rrset.to_xml().split('<Value>')[1].split('</Value>')[0]
-			logger.debug("Current IP address is: %s" % current_ip)
+			logger.info("Current IP address is: %s" % current_ip)
 	updates = record.ResourceRecordSets(aws, zone.id)
-	# Delete current record with old IP
-	rrecord = updates.add_change('DELETE', 
-				record_name,
-				'A',
-				300
-				)
-	rrecord.add_value(current_ip)
+	if current_ip is not None:
+		# Delete current record with old IP
+		logger.info('existing record was found with ip %s, so adding delete before \
+			creating updated record' % (current_ip))
+		rrecord = updates.add_change('DELETE', 
+					record_name,
+					'A',
+					300
+					)
+		rrecord.add_value(current_ip)
 	rrecord = updates.add_change('CREATE', 
 				record_name,
 				'A',
@@ -89,7 +90,7 @@ def area53_update_record(zone_name, name, ip):
 
 
 if __name__ == '__main__':
-	cfg = Settings()
+	cfg = settings.Settings()
 	# Get info for updating AWS
 	ip = get_external_ip()
 	zone = cfg.zone_name

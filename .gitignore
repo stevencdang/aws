@@ -1,5 +1,9 @@
 *.py[cod]
 
+# vim generated files
+*.swp
+*.swo
+
 # C extensions
 *.so
 
