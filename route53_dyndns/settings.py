@@ -18,8 +18,8 @@ class Settings(object):
 	access_key = None
 	secret_key = None
 	zone_id = 'Z3DDPTYQOOEYGN'
-	zone_name = 'scdangit.com'
-	record_name = 'pollenoffice.scdangit.com'
+	zone_name = 'scdangit.com.'
+	record_name = 'pollenoffice2.scdangit.com.'
 
 	def __init__(self):
 		self.get_config()

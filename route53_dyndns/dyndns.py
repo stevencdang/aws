@@ -1,8 +1,10 @@
+#/usr/bin/python
 import socket, os, time, re
 import urllib2
 import settings
 from settings import Settings
 from area53 import route53
+from boto.route53 import connection, record
 import logging
 
 logger = logging.getLogger(__name__)
@@ -38,19 +40,45 @@ def get_external_ip():
 
 def find_zone(zones, zone_name):
 	for zone in zones:
-		if zone['Name'] is zone_name:
+		logger.debug('checking zone with ID %s and name %s\n \
+			matching zone with name %s' % (zone.id, zone.name, zone_name))
+		if zone.name == zone_name:
+			logger.debug('found zone with ID %s and name %s' % (zone.id, zone.name))
 			return zone	
 
 
-def define_update_record(zone_name, record_name, ip):
+def define_update_record(zone_name, record_name, new_ip):
 	global cfg
-	aws = get_connections()
+	aws = get_connection()
 	zones = aws.get_zones()
+	logger.debug('Getting zone with name %s' % zone_name)
+	zone = aws.get_zone(zone_name)
 	zone = find_zone(zones, zone_name)
-	zone_id = zone['ID'].replace('/hostedzone/','')
-	logger.debug('Found zone matching name %s with id %s' % (zone_name, zone_id))
-	#updates = ResourceRecordsSets(aws, cfg.zone_id)
-	#update = updates.add_change(
+	logger.debug('Found zone matching name %s with id %s' % (zone.name, zone.id))
+	logger.debug('modifying record with name %s' % record_name)
+	# Retreiving current IP address of record
+	current_rrsets = aws.get_all_rrsets(zone.id)
+	current_ip = None
+	for rrset in current_rrsets:
+		if record_name in rrset.to_xml():
+			current_ip = rrset.to_xml().split('<Value>')[1].split('</Value>')[0]
+			logger.debug("Current IP address is: %s" % current_ip)
+	updates = record.ResourceRecordSets(aws, zone.id)
+	# Delete current record with old IP
+	rrecord = updates.add_change('DELETE', 
+				record_name,
+				'A',
+				300
+				)
+	rrecord.add_value(current_ip)
+	rrecord = updates.add_change('CREATE', 
+				record_name,
+				'A',
+				300
+				)
+	rrecord.add_value(new_ip)
+	updates.commit()
+
 
 
 # use area53 to update a record give name and ip and strings
@@ -65,7 +93,6 @@ if __name__ == '__main__':
 	# Get info for updating AWS
 	ip = get_external_ip()
 	zone = cfg.zone_name
-	record = cfg.record_name
-	define_(zone, record, ip)
+	record_name = cfg.record_name
+	define_update_record(zone, record_name, ip)
 
-	
