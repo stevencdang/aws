@@ -2,7 +2,6 @@
 import socket, os, time, re
 import urllib2
 from aws.route53_dyndns import settings
-from area53 import route53
 from boto.route53 import connection, record
 import logging
 
@@ -79,14 +78,6 @@ def define_update_record(zone_name, record_name, new_ip):
 				)
 	rrecord.add_value(new_ip)
 	updates.commit()
-
-
-
-# use area53 to update a record give name and ip and strings
-def area53_update_record(zone_name, name, ip):
-	zone = route53.get_zone(zone_name)
-	for record in zone.get_records():
-		print(record)
 
 
 if __name__ == '__main__':
