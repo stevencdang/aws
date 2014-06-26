@@ -1,5 +1,6 @@
 # Requires pymongo
 import pymongo
+from sets import Set
 
 from pymongo import MongoClient
 
@@ -18,6 +19,18 @@ ideagens = {'url': "kahana.mongohq.com",
             'user': 'experimenter',
             'pswd': 'protolab1' }
 
+def get_uniq_part ():
+  db = get_mongodb(ideagenstest['url'],
+                   ideagenstest['port'],
+                   ideagenstest['dbName'],
+                   ideagenstest['user'],
+                   ideagenstest['pswd'])
+  parts = db.participants.find()
+  users = Set([])
+
+  for part in parts:
+      print "user: %s" % (part['user'])
+
 
 def get_mongodb(dbUrl, dbPort, dbName, dbUser, dbPswd):
   """
@@ -30,7 +43,7 @@ def get_mongodb(dbUrl, dbPort, dbName, dbUser, dbPswd):
   client = MongoClient(dbURI)
   return client[dbName]
 
-  
+
 if __name__ == '__main__':
   dbUrl = "kahana.mongohq.com"
   dbPort = '10056'
@@ -39,12 +52,12 @@ if __name__ == '__main__':
   dbPswd = 'protolab1'
   db = get_mongodb(ideagenstest['url'],
                    ideagenstest['port'],
-                   ideagenstest['dbName'], 
+                   ideagenstest['dbName'],
                    ideagenstest['user'],
                    ideagenstest['pswd'])
 
   parts = db.participants.find()
-  
+
   for part in parts:
       print "id: %s" % (part['_id'])
       print "verification: %i" % (part['verifyCode'])
