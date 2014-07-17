@@ -25,9 +25,7 @@ ideagens = {'url': "kahana.mongohq.com",
 # Meteor must be running to connect
 local_meteor = {'url': "localhost",
                 'port': 3001,
-                'dbName': 'meteor',
-                'user': 'meteor',
-                'pswd': 'meteor',
+                'dbName': 'meteor'
 }
 
 def get_db (db=None):
@@ -35,11 +33,19 @@ def get_db (db=None):
   Returns a handle to an open connection to the mongo db
 
   """
-  return get_mongodb(db['url'],
-                     db['port'],
-                     db['dbName'],
-                     db['user'],
-                     db['pswd'])
+  if ('user' in db.keys()):
+    print "connecting with username and password"
+    return get_mongodb(db['url'],
+                      db['port'],
+                      db['dbName'],
+                      db['user'],
+                      db['pswd'])
+  else:
+    print "connecting without username and password"
+    return get_mongodb(db['url'],
+                      db['port'],
+                      db['dbName'])
+    
 
 
 def get_uniq_part (db):
@@ -88,12 +94,14 @@ def get_mongodb(dbUrl, dbPort, dbName, dbUser=None, dbPswd=None):
   parameters
 
   """
-  if ((dbUser == None) and (dbPswd == None)):
+  if ((dbUser != None) and (dbPswd != None)):
     dbURI = "mongodb://" + dbUser + ":" + dbPswd + "@" + dbUrl + ":" + \
         str(dbPort) + "/" + dbName
+    print "using uri: " + dbURI
   else:
     dbURI = "mongodb://" + dbUrl + ":" + \
         str(dbPort) + "/" + dbName
+    print "using uri: " + dbURI
     
   client = MongoClient(dbURI)
   return client[dbName]
