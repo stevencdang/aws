@@ -7,3 +7,4 @@ Dependencies:
 To Do:
 - After initial clone, copy the boto.cfg.sample to /etc and rename to boto.cfg
 - modify the file to include correct access key and secret key
+- modify settings.py to include appropriate subdomain to update

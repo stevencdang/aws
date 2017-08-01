@@ -17,9 +17,9 @@ class Settings(object):
 	config = None
 	access_key = None
 	secret_key = None
-	zone_id = 'Z3DDPTYQOOEYGN'
-	zone_name = 'scdangit.com.'
-	record_name = 'pollenoffice2.scdangit.com.'
+	zone_id = None 
+	zone_name = None 
+	record_name = None
 
 	def __init__(self):
 		self.get_config()
@@ -30,6 +30,9 @@ class Settings(object):
 		self.config.read('/etc/boto.cfg')
 		self.access_key = self.config.get('Credentials', 'aws_access_key_id')
 		self.secret_key = self.config.get('Credentials', 'aws_secret_access_key')
+		self.zone_id = self.config.get('Route53_setting', 'zone_id')
+		self.zone_name = self.config.get('Route53_setting', 'zone_name')
+		self.record_name = self.config.get('Route53_setting', 'record_name')
 
 
 

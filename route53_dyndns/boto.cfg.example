@@ -1,0 +1,10 @@
+[Credentials]
+aws_access_key_id = <your access key>
+aws_secret_access_key = <your secret key>
+
+[Route53_setting]
+zone_id = <zone id for the target zone>
+zone_name = <route 53 zone name, eg: 'domain.com.'>
+record_name = <route53 record name to modify eg: 'subdomain.domain.com.'>
+
+
