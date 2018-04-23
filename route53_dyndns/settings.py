@@ -6,7 +6,7 @@ import ConfigParser
 import logging
 
 #Setup logging
-log_level = logging.DEBUG
+log_level = logging.INFO
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(log_level)

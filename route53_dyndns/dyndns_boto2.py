@@ -1,10 +1,8 @@
 #!/usr/bin/python
 import socket, os, time, re
-import copy
 import urllib2
 from aws.route53_dyndns import settings
 from boto.route53 import connection, record
-import boto3
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,12 +16,10 @@ def get_connection():
 	else:
 		aws_log_level = 0	
 	logger.debug('Access key is %s' % cfg.access_key)
-	
-	aws = boto3.client('route53')
-	# aws = connection.Route53Connection(cfg.access_key,
-	# 				   cfg.secret_key,
-	# 				   debug=aws_log_level,
-	# 				   security_token=None)
+	aws = connection.Route53Connection(cfg.access_key,
+					   cfg.secret_key,
+					   debug=aws_log_level,
+					   security_token=None)
 	return aws
 
 
@@ -43,13 +39,11 @@ def get_external_ip():
 
 
 def find_zone(zones, zone_name):
-    logger.debug(zones)
     for zone in zones:
-	logger.debug(zone)
         logger.debug('checking zone with ID %s and name %s\n \
-                matching zone with name %s' % (zone['Id'], zone['Name'], zone_name))
-        if zone['Name'] == zone_name:
-                logger.debug('found zone with ID %s and name %s' % (zone['Id'], zone['Name']))
+                matching zone with name %s' % (zone.id, zone.name, zone_name))
+        if zone.name == zone_name:
+                logger.debug('found zone with ID %s and name %s' % (zone.id, zone.name))
                 return zone	
         else:
             logger.debug("Ignoring zone with name: %s" % zone)
@@ -60,51 +54,37 @@ def define_update_record(zone_name, record_name, new_ip):
         # Connect to AWS
 	aws = get_connection()
         # Get list of hosted zones and select the target to update base on parameters
-	response = aws.list_hosted_zones()
-	zones = response['HostedZones']
+	zones = aws.get_zones()
 	logger.debug('Getting zone with name %s' % zone_name)
 	zone = find_zone(zones, zone_name)
-	logger.debug('Found zone matching name %s with id %s' % (zone['Name'], zone['Id']))
+	logger.debug('Found zone matching name %s with id %s' % (zone.name, zone.id))
 	logger.debug('modifying record with name %s' % record_name)
 	# Retreiving current IP address of record
-	response = aws.list_resource_record_sets(
-		HostedZoneId=zone['Id'])
-	current_rrsets = response['ResourceRecordSets']
-	# logger.debug(current_rrsets)
+	current_rrsets = aws.get_all_rrsets(zone.id)
 	current_ip = None
-	cur_rrset = None
 	for rrset in current_rrsets:
-            if record_name in rrset['Name']:
-		cur_rrset = rrset
-		current_ip = rrset['ResourceRecords'][0]['Value']
+            if record_name in rrset.to_xml():
+                current_ip = rrset.to_xml().split('<Value>')[1].split('</Value>')[0]
                 logger.info("Current IP address is: %s" % current_ip)
-	if current_ip != new_ip:
-		new_rrset = copy.deepcopy(cur_rrset)
-		new_rrset['ResourceRecords'][0]['Value'] = new_ip
-		change_request = {
-			'Comment': "Changing IP from %s to %s" % (current_ip, new_ip),
-			'Changes': [
-				{
-					'Action': 'DELETE',
-					'ResourceRecordSet': cur_rrset
-				},
-				{
-					'Action': 'CREATE',
-					'ResourceRecordSet': new_rrset
-				},
-			]
-
-		}
-		logger.debug("Submitting change request for hosted zone %s: %s" % (zone['Id'], str(change_request)))
-
-		response = aws.change_resource_record_sets(
-			HostedZoneId=zone['Id'],
-			ChangeBatch=change_request
-		)
-		logger.debug("Got record change response: %s" % str(response))
-		logger.info("Completed update to new ip: %s" % new_ip)
-	else:
-		logger.info("No need to update, ip is the same as previous")
+	updates = record.ResourceRecordSets(aws, zone.id)
+	if current_ip is not None:
+            # Delete current record with old IP
+            logger.info('existing record was found with ip %s, so adding delete before \
+                creating updated record' % (current_ip))
+            rrecord = updates.add_change('DELETE', 
+                                         record_name,
+                                         'A',
+                                         300
+                                         )
+            rrecord.add_value(current_ip)
+	rrecord = updates.add_change('CREATE', 
+                                    record_name,
+                                    'A',
+                                    300
+                                    )
+	rrecord.add_value(new_ip)
+	updates.commit()
+        logger.info("Completed update to new ip: %s" % new_ip)
 
 
 if __name__ == '__main__':
@@ -113,6 +93,5 @@ if __name__ == '__main__':
 	ip = get_external_ip()
 	zone = cfg.zone_name
 	record_name = cfg.record_name
-
 	define_update_record(zone, record_name, ip)
 
